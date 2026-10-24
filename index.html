@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="theme-color" content="#ffffff">
+<meta name="theme-color" content="#ffffff" id="themeColor">
 <title>CALR Reconciliation</title>
 
 <!-- Tab icon: hosted copy first, then the transparent versions of the uploaded USC seal -->
@@ -19,6 +19,7 @@
     height: 100%;
     background: #ffffff;
     overflow: hidden;
+    transition: background-color .4s ease;
   }
 
   /* ── App frame (hidden until the web app has loaded) ── */
@@ -163,6 +164,11 @@
     setTimeout(function () {
       frame.classList.add('ready');
       loader.classList.add('hide');
+      // Loading screen is white; once the app is showing, match the dark-green theme
+      // so the browser bar and any overscroll area don't flash white.
+      document.documentElement.style.background = '#0f2a1e';
+      document.body.style.background = '#0f2a1e';
+      var tc = document.getElementById('themeColor'); if (tc) tc.setAttribute('content', '#0f2a1e');
       setTimeout(function () { try { video.pause(); } catch (e) {} }, 500);
     }, wait);
   }
