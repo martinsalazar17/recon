@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#ffffff">
+<title>USC Comptroller – Advances Liquidation</title>
+<style>
+  html, body {
+    margin: 0;
+    padding: 0;
+    height: 100%;
+    background: #ffffff;
+    overflow: hidden;
+  }
+
+  /* ── App frame (hidden until the web app has loaded) ── */
+  #frame {
+    position: fixed;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    border: 0;
+    background: #ffffff;
+    opacity: 0;
+    transition: opacity .35s ease;
+  }
+  #frame.ready { opacity: 1; }
+
+  /* ── Loading screen ── */
+  #loader {
+    position: fixed;
+    inset: 0;
+    z-index: 10;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background: #ffffff;
+    transition: opacity .4s ease, visibility .4s ease;
+  }
+  #loader.hide {
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+  }
+  #loader video {
+    width: min(60vw, 320px);
+    height: auto;
+    max-height: 50vh;
+    object-fit: contain;
+    background: #ffffff;
+  }
+
+  /* Spinner fallback — only shown if loading.mp4 cannot be played */
+  #spinner {
+    display: none;
+    width: 44px;
+    height: 44px;
+    border: 4px solid #e5e7eb;
+    border-top-color: #006747;
+    border-radius: 50%;
+    animation: spin .9s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* "Taking longer than usual" message */
+  #slow {
+    display: none;
+    margin-top: 20px;
+    padding: 0 20px;
+    text-align: center;
+    font: 14px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+    color: #4b5563;
+  }
+  #slow a, #slow button {
+    font: inherit;
+    color: #006747;
+    background: none;
+    border: 0;
+    padding: 0;
+    text-decoration: underline;
+    cursor: pointer;
+  }
+</style>
+</head>
+<body>
+
+  <!-- Loading screen -->
+  <div id="loader" role="status" aria-live="polite" aria-label="Loading">
+    <video id="loadingVideo" src="loading.mp4" autoplay muted loop playsinline preload="auto"></video>
+    <div id="spinner"></div>
+    <div id="slow">
+      Taking longer than usual…<br>
+      <button type="button" id="reloadBtn">Reload</button>
+      &nbsp;·&nbsp;
+      <a id="openLink" href="#" target="_blank" rel="noopener">Open in a new tab</a>
+    </div>
+  </div>
+
+  <!-- Apps Script web app -->
+  <iframe id="frame"
+          title="USC Comptroller – Advances Liquidation"
+          allow="clipboard-write; fullscreen"
+          allowfullscreen></iframe>
+
+  <noscript>
+    <p style="font:16px system-ui,Arial,sans-serif;text-align:center;margin-top:40px;position:fixed;inset:0;background:#fff;z-index:20">
+      Please enable JavaScript to use this application.
+    </p>
+  </noscript>
+
+<script>
+(function () {
+  'use strict';
+
+  // ── Settings ──────────────────────────────────────────────────────────────
+  var APP_URL = 'https://script.google.com/a/macros/usc.edu.ph/s/AKfycbw-b7q5PX_hmfG-CiU9AdcKVxNpGWekWu6HgtbajCnFnLFXwRMo65g8yRnO5xiMAvvg/exec';
+  var MIN_LOADER_MS = 900;    // show the loading video at least this long (avoids a flash)
+  var SLOW_AFTER_MS = 20000;  // show the "taking longer than usual" hint after this long
+  var MAX_WAIT_MS   = 45000;  // reveal the frame anyway after this long
+
+  // ── Elements ──────────────────────────────────────────────────────────────
+  var frame   = document.getElementById('frame');
+  var loader  = document.getElementById('loader');
+  var video   = document.getElementById('loadingVideo');
+  var spinner = document.getElementById('spinner');
+  var slow    = document.getElementById('slow');
+  var openLnk = document.getElementById('openLink');
+  var reload  = document.getElementById('reloadBtn');
+
+  var startedAt = Date.now();
+  var revealed  = false;
+
+  openLnk.href = APP_URL;
+  reload.addEventListener('click', function () { window.location.reload(); });
+
+  // ── Loading video: autoplay, with a spinner fallback ──────────────────────
+  function showSpinner() {
+    video.style.display = 'none';
+    spinner.style.display = 'block';
+  }
+  video.addEventListener('error', showSpinner);
+  var p = video.play();
+  if (p && typeof p.catch === 'function') {
+    p.catch(function () { /* autoplay blocked: first frame stays visible, which is fine */ });
+  }
+
+  // ── Reveal the app once it has loaded ─────────────────────────────────────
+  function reveal() {
+    if (revealed) return;
+    revealed = true;
+    var wait = Math.max(0, MIN_LOADER_MS - (Date.now() - startedAt));
+    setTimeout(function () {
+      frame.classList.add('ready');
+      loader.classList.add('hide');
+      setTimeout(function () { try { video.pause(); } catch (e) {} }, 500);
+    }, wait);
+  }
+
+  frame.addEventListener('load', reveal);
+
+  setTimeout(function () { if (!revealed) slow.style.display = 'block'; }, SLOW_AFTER_MS);
+  setTimeout(reveal, MAX_WAIT_MS);
+
+  // Set the source last so the load listener is always attached first
+  frame.src = APP_URL;
+})();
+</script>
+</body>
+</html>
